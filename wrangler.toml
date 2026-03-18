@@ -1,0 +1,11 @@
+name = "samu-hq-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SAMU_KV"
+id = "REMPLACE_PAR_TON_KV_ID"
+
+[vars]
+# API_SECRET est une variable secrète, à définir via :
+# wrangler secret put API_SECRET
