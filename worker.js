@@ -21,14 +21,12 @@ function err(msg, status = 400) {
   return json({ error: msg }, status);
 }
 
-// ─── AUTH BOT ───
 function verifyBot(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.replace("Bearer ", "").trim();
   return token === env.API_SECRET;
 }
 
-// ─── KV HELPERS ───
 async function kvGet(env, key) {
   const val = await env.SAMU_KV.get(key);
   return val ? JSON.parse(val) : [];
@@ -43,12 +41,10 @@ async function kvGetObj(env, key) {
   return val ? JSON.parse(val) : {};
 }
 
-// ─── NEXT ID ───
 function nextId(list) {
   return list.length === 0 ? 1 : Math.max(...list.map(x => x.id || 0)) + 1;
 }
 
-// ─── PASSWORD GENERATOR ───
 function genPassword(length = 10) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
   let pwd = "";
@@ -64,34 +60,28 @@ function genUsername(name) {
   return clean + num;
 }
 
-// ══════════════════════════════════════════════
-//  ROUTER PRINCIPAL
-// ══════════════════════════════════════════════
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
 
-    // CORS preflight
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
     }
 
-    // ── ROOT ──
+    // ROOT
     if (path === "/" && method === "GET") {
       return json({ message: "SAMU HQ API en ligne 🚑", version: "1.0.0" });
     }
 
     // ════════════════════════════════
-    //  AUTH SITE — POST /auth/login
+    //  AUTH SITE
     // ════════════════════════════════
     if (path === "/auth/login" && method === "POST") {
       const body = await request.json();
       const creds = await kvGetObj(env, "credentials");
 
-      // Compte admin par défaut si vide
       if (Object.keys(creds).length === 0) {
         creds["admin"] = { username: "admin", password: "samu2024", role: "admin", discord_id: null };
         await env.SAMU_KV.put("credentials", JSON.stringify(creds));
@@ -105,20 +95,16 @@ export default {
     }
 
     // ════════════════════════════════
-    //  CREDENTIALS
+    //  CREDENTIALS (bot uniquement)
     // ════════════════════════════════
     if (path === "/credentials/generate" && method === "POST") {
       if (!verifyBot(request, env)) return err("Non autorisé", 401);
       const body = await request.json();
       const creds = await kvGetObj(env, "credentials");
-
       const username = genUsername(body.discord_name);
       const password = genPassword();
-
       creds[username] = {
-        username,
-        password,
-        role: "membre",
+        username, password, role: "membre",
         discord_id: body.discord_id,
         discord_name: body.discord_name,
         created_by: body.created_by,
@@ -132,10 +118,8 @@ export default {
       if (!verifyBot(request, env)) return err("Non autorisé", 401);
       const body = await request.json();
       const creds = await kvGetObj(env, "credentials");
-
       const entry = Object.values(creds).find(v => v.discord_id === body.discord_id);
       if (!entry) return err("Membre introuvable", 404);
-
       const newPassword = genPassword();
       entry.password = newPassword;
       entry.reset_at = new Date().toISOString();
@@ -154,14 +138,11 @@ export default {
     }
 
     // ════════════════════════════════
-    //  RAPPORTS
+    //  RAPPORTS (public)
     // ════════════════════════════════
     if (path === "/rapports") {
-      if (method === "GET") {
-        return json(await kvGet(env, "rapports"));
-      }
+      if (method === "GET") return json(await kvGet(env, "rapports"));
       if (method === "POST") {
-        if (!verifyBot(request, env)) return err("Non autorisé", 401);
         const body = await request.json();
         const list = await kvGet(env, "rapports");
         const entry = { ...body, id: nextId(list), date: new Date().toISOString() };
@@ -171,7 +152,6 @@ export default {
       }
     }
 
-    // DELETE /rapports/:id
     const rapportMatch = path.match(/^\/rapports\/(\d+)$/);
     if (rapportMatch && method === "DELETE") {
       const id = parseInt(rapportMatch[1]);
@@ -181,7 +161,7 @@ export default {
     }
 
     // ════════════════════════════════
-    //  PATIENTS
+    //  PATIENTS (public)
     // ════════════════════════════════
     if (path === "/patients") {
       if (method === "GET") return json(await kvGet(env, "patients"));
@@ -214,12 +194,11 @@ export default {
     }
 
     // ════════════════════════════════
-    //  SERVICES
+    //  SERVICES (public)
     // ════════════════════════════════
     if (path === "/services") {
       if (method === "GET") return json(await kvGet(env, "services"));
       if (method === "POST") {
-        if (!verifyBot(request, env)) return err("Non autorisé", 401);
         const body = await request.json();
         const list = await kvGet(env, "services");
         const entry = { ...body, id: nextId(list) };
@@ -238,7 +217,6 @@ export default {
         return json({ deleted: id });
       }
       if (method === "PUT" && serviceMatch[2]) {
-        if (!verifyBot(request, env)) return err("Non autorisé", 401);
         const list = await kvGet(env, "services");
         const s = list.find(x => x.id === id);
         if (s) s.fin = new Date().toISOString();
@@ -248,7 +226,7 @@ export default {
     }
 
     // ════════════════════════════════
-    //  MEMBRES
+    //  MEMBRES (public)
     // ════════════════════════════════
     if (path === "/membres") {
       if (method === "GET") return json(await kvGet(env, "membres"));
