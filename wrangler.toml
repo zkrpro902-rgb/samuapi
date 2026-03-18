@@ -1,10 +1,10 @@
-name = "samu-hq-api"
+name = "samuapi"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "SAMU_KV"
-id = "REMPLACE_PAR_TON_KV_ID"
+id = "9a91917d13f235f0d549610c14e52096"
 
 [vars]
 # API_SECRET est une variable secrète, à définir via :
