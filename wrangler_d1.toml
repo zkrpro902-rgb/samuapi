@@ -1,0 +1,8 @@
+name = "samuapi"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "SAMU_DB"
+database_name = "samudb"
+database_id = "00000000-00000006-00005033-d1ac4843df3b997e6f753f70393ca96a"
