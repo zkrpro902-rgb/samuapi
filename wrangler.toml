@@ -8,4 +8,4 @@ id = "9464d8aa21ad4f4bb0a75824a84ece49"
 
 [vars]
 # API_SECRET est une variable secrète, à définir via :
-# wrangler secret put API_SECRET
+# wrangler secret put API_SECRET 
